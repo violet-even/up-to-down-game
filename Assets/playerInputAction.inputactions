@@ -16,9 +16,9 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "scrollWheel",
-                    "type": "Button",
-                    "id": "e341baae-6d9b-4116-b0c5-deae63451de9",
+                    "name": "Attack",
+                    "type": "PassThrough",
+                    "id": "d6a2d97c-9fa3-47e6-a0f9-88e9ea04794b",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -80,6 +80,17 @@
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "40de28ab-c801-43b7-951d-8f5794a26c35",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
