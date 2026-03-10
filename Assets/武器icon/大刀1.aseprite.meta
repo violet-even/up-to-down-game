@@ -124,9 +124,9 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: "\u5927\u52001"
     originalName: 
-    pivot: {x: 0.5, y: 0}
+    pivot: {x: 0.2806904, y: 0.6870555}
     alignment: 9
-    border: {x: 0, y: 16, z: 17, w: 0}
+    border: {x: 0, y: 22, z: 23, w: 0}
     rect:
       serializedVersion: 2
       x: 4
