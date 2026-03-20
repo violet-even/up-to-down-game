@@ -7,27 +7,36 @@ public enum PlayerState
     Idle,
     Move,
     Attack,
+    Hurt,
     Dead
 }
 
 public class PlayerStateMachine : MonoBehaviour
 {
-    [Header("核心组件")]
+    [Header("???????")]
     public Rigidbody2D rb;
     public SpriteRenderer sr;
     public Animator anim;
     public WeaponManager weaponManager;
 
-    [Header("参数")]
+    [Header("????")]
     public float moveSpeed = 5f;
     public float globalAttackCooldown = 0.5f;
+
+    [Header("生命值（可选）")]
+    public int maxHealth = 3;
+
+    [Header("受伤时间（可选）")]
+    public float hurtDuration = 0.15f;
 
     public PlayerState currentState;
     private float attackTimer;
     private Vector2 moveDirection;
     private bool isDead;
     private bool isAttacking;
-    private float lastAttackTime; // 新增：防止松开时重复触发
+    private float lastAttackTime; // ????????????????????
+    private int currentHealth;
+    private float hurtTimer;
 
     private PlayerInput playerInput;
     private InputAction moveAction;
@@ -58,6 +67,9 @@ public class PlayerStateMachine : MonoBehaviour
     {
         currentState = PlayerState.Idle;
         attackTimer = 0;
+        isDead = false;
+        isAttacking = false;
+        currentHealth = maxHealth;
     }
 
     void Update()
@@ -73,7 +85,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (isDead || currentState == PlayerState.Attack)
+        if (isDead || currentState == PlayerState.Attack || currentState == PlayerState.Hurt)
         {
             if (rb != null) rb.velocity = Vector2.zero;
             return;
@@ -87,6 +99,16 @@ public class PlayerStateMachine : MonoBehaviour
 
     void UpdateState()
     {
+        if (currentState == PlayerState.Hurt)
+        {
+            hurtTimer -= Time.deltaTime;
+            if (hurtTimer <= 0f)
+            {
+                currentState = moveDirection.magnitude > 0.1f ? PlayerState.Move : PlayerState.Idle;
+            }
+            return;
+        }
+
         if (currentState == PlayerState.Attack)
         {
             if (attackTimer <= 0)
@@ -105,7 +127,7 @@ public class PlayerStateMachine : MonoBehaviour
             currentState = PlayerState.Idle;
         }
 
-        // 严格只在按下瞬间触发一次（彻底封死松开触发）
+        // ????????????????Σ?????????????????
         if (attackAction != null)
         {
             if (attackTimer <= 0 && attackAction.WasPressedThisFrame() && !isAttacking && Time.time - lastAttackTime > 0.05f)
@@ -115,7 +137,7 @@ public class PlayerStateMachine : MonoBehaviour
                 currentState = PlayerState.Attack;
                 attackTimer = globalAttackCooldown;
                 OnAttack();
-                Debug.Log("攻击触发 - 只一次（已防松开）");
+                Debug.Log("???????? - ???Σ?????????");
             }
         }
         else
@@ -127,7 +149,7 @@ public class PlayerStateMachine : MonoBehaviour
                 currentState = PlayerState.Attack;
                 attackTimer = globalAttackCooldown;
                 OnAttack();
-                Debug.Log("攻击触发 - 只一次（旧输入）");
+                Debug.Log("???????? - ???Σ???????");
             }
         }
     }
@@ -185,6 +207,38 @@ public class PlayerStateMachine : MonoBehaviour
         rb.velocity = Vector2.zero;
         rb.simulated = false;
         currentState = PlayerState.Dead;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (isDead) return;
+        if (damage <= 0) return;
+
+        currentHealth -= damage;
+        Debug.Log($"{nameof(PlayerStateMachine)}: Took damage, remaining {currentHealth}");
+
+        if (currentHealth <= 0)
+        {
+            Die();
+            return;
+        }
+
+        // Enter Hurt: stop movement/attack for a short duration.
+        currentState = PlayerState.Hurt;
+        hurtTimer = hurtDuration;
+        attackTimer = 0f;
+        isAttacking = false;
+
+        if (weaponManager != null) weaponManager.EnableAttackCollider(false);
+        if (sr != null) sr.color = Color.red;
+
+        StartCoroutine(HitFlashRoutine());
+    }
+
+    private IEnumerator HitFlashRoutine()
+    {
+        yield return new WaitForSeconds(hurtDuration);
+        if (currentState == PlayerState.Hurt && sr != null) sr.color = Color.white;
     }
 
     public void ResetAttackTimer()
