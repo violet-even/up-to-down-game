@@ -23,10 +23,10 @@ public class PlayerStateMachine : MonoBehaviour
     public float moveSpeed = 5f;
     public float globalAttackCooldown = 0.5f;
 
-    [Header("生命值（可选）")]
+    [Header("????????????")]
     public int maxHealth = 3;
 
-    [Header("受伤时间（可选）")]
+    [Header("????????????")]
     public float hurtDuration = 0.15f;
 
     public PlayerState currentState;
@@ -127,30 +127,26 @@ public class PlayerStateMachine : MonoBehaviour
             currentState = PlayerState.Idle;
         }
 
-        // ????????????????Σ?????????????????
+        // ???????????????????????????????????
+        bool attackHeld = false;
         if (attackAction != null)
         {
-            if (attackTimer <= 0 && attackAction.WasPressedThisFrame() && !isAttacking && Time.time - lastAttackTime > 0.05f)
-            {
-                lastAttackTime = Time.time;
-                isAttacking = true;
-                currentState = PlayerState.Attack;
-                attackTimer = globalAttackCooldown;
-                OnAttack();
-                Debug.Log("???????? - ???Σ?????????");
-            }
+            // 用“按住”判断，避免 InputSystem 的 performed/interaction 在松开帧也触发一次
+            attackHeld = attackAction.IsPressed();
         }
         else
         {
-            if (attackTimer <= 0 && Input.GetMouseButtonDown(0) && !isAttacking && Time.time - lastAttackTime > 0.05f)
-            {
-                lastAttackTime = Time.time;
-                isAttacking = true;
-                currentState = PlayerState.Attack;
-                attackTimer = globalAttackCooldown;
-                OnAttack();
-                Debug.Log("???????? - ???Σ???????");
-            }
+            attackHeld = Input.GetMouseButton(0);
+        }
+
+        if (attackTimer <= 0 && attackHeld && !isAttacking && Time.time - lastAttackTime > 0.05f)
+        {
+            lastAttackTime = Time.time;
+            isAttacking = true;
+            currentState = PlayerState.Attack;
+            attackTimer = globalAttackCooldown;
+            OnAttack();
+            Debug.Log("攻击触发：按住则持续");
         }
     }
 
