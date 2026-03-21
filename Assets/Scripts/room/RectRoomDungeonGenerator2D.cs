@@ -6,6 +6,7 @@ using UnityEngine;
 /// Random rect rooms + rect corridors (top-down 2D).
 /// Rooms and corridors are axis-aligned rectangles in a discrete cell grid.
 /// </summary>
+[DefaultExecutionOrder(-50)]
 public class RectRoomDungeonGenerator2D : MonoBehaviour
 {
     [Header("Generation")]
@@ -30,10 +31,16 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
     public bool instantiateOnStart = true;
 
     [Header("Player Placement")]
-    [Tooltip("If true, place the player at the initial room center during Generate().")]
+    [Tooltip("If true, place/spawn the player at the initial room center during Generate().")]
     public bool placePlayerOnGenerate = true;
 
-    [Tooltip("Optional: assign player transform explicitly. If null, generator will find GameObject with tag 'Player'.")]
+    [Tooltip("若赋值：在初始房间中心生成该预制体。")]
+    public GameObject playerPrefab;
+
+    [Tooltip("为 true 时：只要挂了 playerPrefab 就会实例化；若场景里已有同 Tag 的玩家会先销毁再生成（避免“有占位物体导致永远不实例化”）。")]
+    public bool alwaysSpawnPlayerPrefab = true;
+
+    [Tooltip("仅当未设置 Player Prefab 时生效：移动场景中已有玩家的 Transform。若已设置 Player Prefab，将优先实例化预制体（请留空此项以免误挡实例化）。")]
     public Transform playerTransform;
 
     [Tooltip("Player tag used when playerTransform is not assigned.")]
@@ -53,17 +60,18 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
     [Min(1)] public int corridorLengthMin = 4;
     [Min(1)] public int corridorLengthMax = 18;
 
-    [Tooltip("For each side midpoint of the initial room, chance to create a corridor to a new room.")]
-    [Range(0f, 1f)] public float sideConnectionChance = 0.7f;
-
+    [Tooltip("每次尝试从某房间某边伸出连廊时，单条连廊内部的随机尝试次数（防止一次失败就放弃）。")]
     [Min(1)] public int connectAttemptsPerSide = 40;
+
+    [Tooltip("为达到目标房间数时，从已有房间随机选边扩展的最大总尝试次数（防止死循环）。")]
+    [Min(1)] public int maxExpansionAttempts = 2000;
 
     [Header("Corridor Path Style (legacy)")]
     [Tooltip("Keep for compatibility with older corridor-building code; it controls L-turn order when connecting rectangles.")]
     public bool horizontalThenVertical = true;
 
     [Header("Instantiate (optional)")]
-    [Tooltip("Parent transform for generated objects.")]
+    [Tooltip("生成内容的父节点：必须拖「场景 Hierarchy」里的物体。不要拖 Project 里的 Prefab 资源，否则会报错且无法生成。")]
     public Transform generatedRoot;
 
     [Tooltip("If provided, instantiate this prefab for each room/corridor rect (it should have BoxCollider2D or visuals).")]
@@ -83,6 +91,22 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
     [Tooltip("If we instantiate BoxCollider2D for rooms/corridors, set it as trigger so it won't block internal movement.")]
     public bool walkableRectCollidersAsTriggers = true;
 
+    [Header("Floor visualization (Prefab — no Tilemap)")]
+    [Tooltip("If true, instantiate floor prefabs for each room/corridor rect (visual only).")]
+    public bool useFloorPrefabs = true;
+
+    [Tooltip("Prefab for room floor: usually a 1x1 unit Sprite/Quad; will be scaled to match rect size in world units.")]
+    public GameObject floorRoomPrefab;
+
+    [Tooltip("Optional different look for corridors. If null, uses floorRoomPrefab.")]
+    public GameObject floorCorridorPrefab;
+
+    [Tooltip("When floor prefabs are used, skip the large BoxCollider2D on room/corridor rects (walls still block).")]
+    public bool hideWalkableColliderWhenFloorPrefab = true;
+
+    [Tooltip("SpriteRenderer sorting order for floor visuals (below player/walls if negative).")]
+    public int floorSortingOrder = -10;
+
     public readonly List<RectInt> GeneratedRooms = new List<RectInt>();
     public readonly List<RectInt> GeneratedCorridors = new List<RectInt>();
 
@@ -93,32 +117,125 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
         GeneratedRooms.Clear();
         GeneratedCorridors.Clear();
 
-        // 1) Initial room (random rect, non-overlapping)
+        // 1) Initial room（随机矩形，不重叠）
         var initialRoom = GenerateSingleRoom();
         GeneratedRooms.Add(initialRoom);
 
-        // 2) Place player at initial room center
-        if (placePlayerOnGenerate)
+        // 2) 目标房间数：在 [minRoomCount, maxRoomCount] 内随机（与生成逻辑一致）
+        int minC = Mathf.Min(minRoomCount, maxRoomCount);
+        int maxC = Mathf.Max(minRoomCount, maxRoomCount);
+        int targetRooms = UnityEngine.Random.Range(minC, maxC + 1);
+        targetRooms = Mathf.Max(1, targetRooms);
+
+        // 3) 从已有房间随机选一边扩展，直到达到 targetRooms 或尝试耗尽
+        int budget = maxExpansionAttempts;
+        while (GeneratedRooms.Count < targetRooms && budget-- > 0)
         {
-            var target = playerTransform;
-            if (target == null)
+            int idx = UnityEngine.Random.Range(0, GeneratedRooms.Count);
+            var src = GeneratedRooms[idx];
+            var side = (Side)UnityEngine.Random.Range(0, 4);
+            TryConnectOneSide(side, src);
+        }
+
+        if (GeneratedRooms.Count < minC)
+        {
+            Debug.LogWarning(
+                $"{nameof(RectRoomDungeonGenerator2D)}: 仅生成 {GeneratedRooms.Count} 间房间，低于最少 {minC}（地图空间不足或参数过严，可调大地图或 corridor 长度范围后重试）。");
+        }
+
+        // 4) 玩家在初始房间中央（生成预制体或移动已有对象）
+        PlacePlayerAtInitialRoom(initialRoom);
+    }
+
+    /// <summary>
+    /// 将玩家放在第一个房间（initialRoom）的世界坐标中心。
+    /// </summary>
+    private void PlacePlayerAtInitialRoom(RectInt initialRoom)
+    {
+        if (!placePlayerOnGenerate)
+        {
+            Debug.Log($"{nameof(RectRoomDungeonGenerator2D)}：已跳过放置玩家（{nameof(placePlayerOnGenerate)} = false）。");
+            return;
+        }
+
+        Vector2 c = CellToWorldCenter(initialRoom);
+
+        // 优先：只要挂了 Player Prefab 就实例化（避免 Inspector 里误拖了 playerTransform 导致永远不 Instantiate）
+        if (playerPrefab != null)
+        {
+            float z = playerPrefab.transform.position.z;
+            var pos = new Vector3(c.x, c.y, z);
+
+            if (alwaysSpawnPlayerPrefab)
             {
-                var playerObj = GameObject.FindGameObjectWithTag(playerTag);
-                if (playerObj != null) target = playerObj.transform;
+                var old = GameObject.FindGameObjectWithTag(playerTag);
+                if (old != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(old);
+                    else
+                        DestroyImmediate(old);
+                }
+
+                var spawned = Instantiate(playerPrefab, pos, Quaternion.identity);
+                ApplyPlayerTag(spawned);
+                Debug.Log($"{nameof(RectRoomDungeonGenerator2D)}：已在初始房间中心实例化玩家 -> {pos}", spawned);
+                return;
             }
 
-            if (target != null)
+            var existing = GameObject.FindGameObjectWithTag(playerTag);
+            if (existing != null)
             {
-                Vector2 c = CellToWorldCenter(initialRoom);
-                target.position = new Vector3(c.x, c.y, target.position.z);
+                existing.transform.position = new Vector3(c.x, c.y, existing.transform.position.z);
+                Debug.Log($"{nameof(RectRoomDungeonGenerator2D)}：已移动场景中已有玩家到初始房间中心 -> {c}");
+                return;
+            }
+
+            var go = Instantiate(playerPrefab, pos, Quaternion.identity);
+            ApplyPlayerTag(go);
+            Debug.Log($"{nameof(RectRoomDungeonGenerator2D)}：已实例化玩家（场景中原本无同 Tag 对象）-> {pos}", go);
+            return;
+        }
+
+        // 未挂 Prefab：只移动场景中已有对象
+        if (playerTransform != null)
+        {
+            if (!playerTransform.gameObject.scene.IsValid())
+            {
+                Debug.LogWarning($"{nameof(RectRoomDungeonGenerator2D)}：{nameof(playerTransform)} 指向非场景物体（可能是工程里的 Prefab 资源），已忽略。请拖 Hierarchy 里的玩家，或设置 Player Prefab。");
+            }
+            else
+            {
+                playerTransform.position = new Vector3(c.x, c.y, playerTransform.position.z);
+                Debug.Log($"{nameof(RectRoomDungeonGenerator2D)}：已移动指定 Transform 到初始房间中心。");
+                return;
             }
         }
 
-        // 3) From initial room, check 4 side midpoints and randomly connect to new rooms
-        foreach (Side dir in Enum.GetValues(typeof(Side)))
+        var byTag = GameObject.FindGameObjectWithTag(playerTag);
+        if (byTag != null)
         {
-            if (UnityEngine.Random.value > sideConnectionChance) continue;
-            TryConnectOneSide(dir, initialRoom);
+            byTag.transform.position = new Vector3(c.x, c.y, byTag.transform.position.z);
+            Debug.Log($"{nameof(RectRoomDungeonGenerator2D)}：已按 Tag 移动已有对象到初始房间中心。");
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"{nameof(RectRoomDungeonGenerator2D)}：未设置 {nameof(playerPrefab)}，且场景中没有 Tag 为 \"{playerTag}\" 的对象，无法生成或移动玩家。请在生成器上指定 Player Prefab，或在场景里放带该 Tag 的玩家。");
+        }
+    }
+
+    private void ApplyPlayerTag(GameObject spawned)
+    {
+        if (spawned == null || string.IsNullOrEmpty(playerTag))
+            return;
+        try
+        {
+            spawned.tag = playerTag;
+        }
+        catch (UnityException)
+        {
+            Debug.LogWarning($"{nameof(RectRoomDungeonGenerator2D)}：Tag \"{playerTag}\" 未在 Project Settings 中定义，无法设置。请 Edit -> Project Settings -> Tags and Layers 添加。");
         }
     }
 
@@ -152,7 +269,8 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
         return new RectInt(fx, fy, fw, fh);
     }
 
-    private void TryConnectOneSide(Side side, RectInt sourceRoom)
+    /// <returns>是否成功新增一间房+一段连廊</returns>
+    private bool TryConnectOneSide(Side side, RectInt sourceRoom)
     {
         // Corridor starts at the source room boundary, on the side midpoint line, and ends at a destination room boundary.
         for (int attempt = 0; attempt < connectAttemptsPerSide; attempt++)
@@ -235,8 +353,10 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
 
             GeneratedCorridors.Add(corridorRect);
             GeneratedRooms.Add(destRoom);
-            return;
+            return true;
         }
+
+        return false;
     }
 
     private bool IsRectInsideMap(RectInt rect)
@@ -493,9 +613,29 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
         return new Vector2Int(rect.xMin + rect.width / 2, rect.yMin + rect.height / 2);
     }
 
+    /// <summary>
+    /// 父节点必须是已加载场景中的 Transform。若把 Project 里的 Prefab 资源拖到 Generated Root，
+    /// Instantiate/SetParent 会触发 “Setting the parent of a transform which resides in a Prefab Asset…” 并刷屏。
+    /// </summary>
+    private Transform GetInstantiationRoot()
+    {
+        if (generatedRoot == null)
+            return transform;
+
+        if (!generatedRoot.gameObject.scene.IsValid())
+        {
+            Debug.LogWarning(
+                $"{nameof(RectRoomDungeonGenerator2D)}：{nameof(generatedRoot)} 指向了 Prefab 资源或非场景物体，无法作为父节点。已自动使用本生成器物体。请在 Hierarchy 中建空物体并拖到此处，或留空。",
+                this);
+            return transform;
+        }
+
+        return generatedRoot;
+    }
+
     private void ClearGenerated()
     {
-        var root = generatedRoot != null ? generatedRoot : transform;
+        var root = GetInstantiationRoot();
 
         // Only clear objects created previously by this generator.
         // Tag them with a prefix in the name to avoid destroying unrelated children.
@@ -562,23 +702,75 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
             Generate();
         }
 
-        var root = generatedRoot != null ? generatedRoot : transform;
+        var root = GetInstantiationRoot();
+
+        GameObject corridorFloorPrefab = floorCorridorPrefab != null ? floorCorridorPrefab : floorRoomPrefab;
+        bool floorOk = useFloorPrefabs && floorRoomPrefab != null;
+        if (floorOk)
+        {
+            foreach (var r in GeneratedRooms)
+                CreateFloorVisual(root, "Room", r, floorRoomPrefab);
+            foreach (var r in GeneratedCorridors)
+                CreateFloorVisual(root, "Corridor", r, corridorFloorPrefab);
+        }
+
+        bool skipWalkableCollider = hideWalkableColliderWhenFloorPrefab && floorOk;
 
         // Avoid duplicate colliders for corridor overlaps: simple key by rect.
         var created = new HashSet<RectKey>();
 
-        foreach (var r in GeneratedRooms)
+        if (!skipWalkableCollider)
         {
-            if (created.Add(new RectKey(r))) CreateRectObject(root, "RectDungeon_Room", r, rectPrefab);
-        }
-        foreach (var r in GeneratedCorridors)
-        {
-            if (created.Add(new RectKey(r))) CreateRectObject(root, "RectDungeon_Corridor", r, rectPrefab);
+            foreach (var r in GeneratedRooms)
+            {
+                if (created.Add(new RectKey(r))) CreateRectObject(root, "RectDungeon_Room", r, rectPrefab);
+            }
+            foreach (var r in GeneratedCorridors)
+            {
+                if (created.Add(new RectKey(r))) CreateRectObject(root, "RectDungeon_Corridor", r, rectPrefab);
+            }
         }
 
         if (buildBoundaryWalls)
         {
             BuildBoundaryWalls(root);
+        }
+    }
+
+    /// <summary>
+    /// Instantiates a floor prefab scaled to cover the given rect (world space). Colliders on the prefab are removed so only boundary walls block movement.
+    /// </summary>
+    private void CreateFloorVisual(Transform root, string kind, RectInt rect, GameObject prefab)
+    {
+        if (prefab == null || rect.width <= 0 || rect.height <= 0) return;
+
+        Vector2 centerWorld = CellToWorldCenter(rect);
+        Vector2 sizeWorld = CellToWorldSize(rect);
+
+        var go = Instantiate(prefab, new Vector3(centerWorld.x, centerWorld.y, 0f), Quaternion.identity, root);
+        go.name = $"RectDungeon_Floor_{kind}_{rect.xMin}_{rect.yMin}_{rect.width}_{rect.height}";
+
+        var sr = go.GetComponentInChildren<SpriteRenderer>();
+        if (sr != null && sr.sprite != null)
+        {
+            Vector2 spriteSize = sr.sprite.bounds.size;
+            float sx = spriteSize.x > 1e-5f ? sizeWorld.x / spriteSize.x : sizeWorld.x;
+            float sy = spriteSize.y > 1e-5f ? sizeWorld.y / spriteSize.y : sizeWorld.y;
+            go.transform.localScale = new Vector3(sx, sy, 1f);
+            sr.sortingOrder = floorSortingOrder;
+        }
+        else
+        {
+            // No sprite: assume prefab is 1 world unit, scale to rect size
+            go.transform.localScale = new Vector3(sizeWorld.x, sizeWorld.y, 1f);
+        }
+
+        foreach (var col in go.GetComponentsInChildren<Collider2D>(true))
+        {
+            if (Application.isPlaying)
+                Destroy(col);
+            else
+                DestroyImmediate(col);
         }
     }
 
