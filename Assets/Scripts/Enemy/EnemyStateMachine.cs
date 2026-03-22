@@ -27,7 +27,7 @@ public class EnemyStateMachine : MonoBehaviour
 
     private Rigidbody2D _rb;
     private SpriteRenderer _sr;
-    private int _currentHealth;
+    private Entity _entity;
     private float _hurtTimer;
     private Coroutine _hitFlashRoutine;
 
@@ -46,11 +46,18 @@ public class EnemyStateMachine : MonoBehaviour
                 if (player == null) player = controller.player;
             }
         }
+
+        _entity = GetComponent<Entity>();
+        if (_entity == null)
+            _entity = gameObject.AddComponent<Entity>();
     }
 
     private void Start()
     {
-        _currentHealth = enemyData != null ? enemyData.maxHealth : 0;
+        if (enemyData != null)
+            _entity.ConfigureFromEnemyData(enemyData);
+        else
+            _entity.Configure(1, 0f);
 
         if (player == null)
         {
@@ -123,22 +130,22 @@ public class EnemyStateMachine : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (currentState == EnemyState.Dead) return;
+        if (_entity != null && _entity.IsDead) return;
         if (damage <= 0) return;
 
-        float def = enemyData != null ? enemyData.defense : 0f;
-        int final = DamageCalculator.ApplyDefense(damage, def);
-        _currentHealth -= final;
-        Debug.Log($"{nameof(EnemyStateMachine)}: Took {final} damage (raw {damage}), remaining {_currentHealth}");
+        int final = _entity.ApplyDamage(damage);
+        if (final <= 0) return;
 
-        if (_currentHealth <= 0)
-        {
+        Debug.Log($"{nameof(EnemyStateMachine)}: Took {final} damage (raw {damage}), remaining {_entity.CurrentHealth}");
+
+        if (_entity.IsDead)
             SetState(EnemyState.Dead);
-        }
         else
-        {
             SetState(EnemyState.Hurt);
-        }
     }
+
+    /// <summary>共用实体（生命、防御等）</summary>
+    public Entity Entity => _entity;
 
     private void SetState(EnemyState newState)
     {

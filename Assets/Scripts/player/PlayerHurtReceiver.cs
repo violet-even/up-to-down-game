@@ -50,6 +50,9 @@ public class PlayerHurtReceiver : MonoBehaviour
             return;
         if (player.currentState == PlayerState.Dead)
             return;
+        // 受伤硬直期间不再结算碰撞伤害，避免 Stay 每帧反复 TakeDamage 把 hurtTimer 刷满 → 永远卡在 Hurt 无法移动
+        if (player.currentState == PlayerState.Hurt)
+            return;
 
         if (requireEnemyTag && !other.CompareTag("Enemy"))
             return;
@@ -66,7 +69,8 @@ public class PlayerHurtReceiver : MonoBehaviour
 
         int id = enemyController.gameObject.GetInstanceID();
         float now = Time.time;
-        if (_lastHitTimeByEnemy.TryGetValue(id, out float last) && now - last < damageCooldownPerEnemy)
+        float cooldown = Mathf.Max(0.05f, damageCooldownPerEnemy);
+        if (_lastHitTimeByEnemy.TryGetValue(id, out float last) && now - last < cooldown)
             return;
 
         int raw = Mathf.Max(0, enemyController.enemyData.damage);

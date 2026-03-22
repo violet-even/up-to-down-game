@@ -40,9 +40,9 @@ public class PlayerStateMachine : MonoBehaviour
     private bool isAttacking;
     private float lastAttackTime; // ????????????????????
     private bool _attackButtonActive;
-    private int currentHealth;
-    private float _defense;
     private float hurtTimer;
+
+    private Entity _entity;
 
     private PlayerInput playerInput;
     private InputAction moveAction;
@@ -60,6 +60,8 @@ public class PlayerStateMachine : MonoBehaviour
         {
             rb.gravityScale = 0;
             rb.freezeRotation = true;
+            // ??? FixedUpdate???? LateUpdate??????????/???????????
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         }
 
         if (playerInput != null)
@@ -67,6 +69,10 @@ public class PlayerStateMachine : MonoBehaviour
             moveAction = playerInput.actions["Move"];
             attackAction = playerInput.actions["Attack"];
         }
+
+        _entity = GetComponent<Entity>();
+        if (_entity == null)
+            _entity = gameObject.AddComponent<Entity>();
     }
 
     void Start()
@@ -78,13 +84,12 @@ public class PlayerStateMachine : MonoBehaviour
         if (combatStats != null)
         {
             maxHealth = combatStats.maxHealth;
-            _defense = combatStats.defense;
+            _entity.ConfigureFromCombatStats(combatStats);
         }
         else
         {
-            _defense = 0f;
+            _entity.Configure(maxHealth, 0f);
         }
-        currentHealth = maxHealth;
         _attackButtonActive = false;
     }
 
@@ -252,13 +257,18 @@ public class PlayerStateMachine : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (isDead) return;
+        if (_entity != null && _entity.IsDead) return;
         if (damage <= 0) return;
+        // ?????????????? Stay ????/????????
+        if (currentState == PlayerState.Hurt)
+            return;
 
-        int final = DamageCalculator.ApplyDefense(damage, _defense);
-        currentHealth -= final;
-        Debug.Log($"{nameof(PlayerStateMachine)}: Took {final} damage (raw {damage}), remaining {currentHealth}");
+        int final = _entity.ApplyDamage(damage);
+        if (final <= 0) return;
 
-        if (currentHealth <= 0)
+        Debug.Log($"{nameof(PlayerStateMachine)}: Took {final} damage (raw {damage}), remaining {_entity.CurrentHealth}");
+
+        if (_entity.IsDead)
         {
             Die();
             return;
@@ -279,7 +289,8 @@ public class PlayerStateMachine : MonoBehaviour
     private IEnumerator HitFlashRoutine()
     {
         yield return new WaitForSeconds(hurtDuration);
-        if (currentState == PlayerState.Hurt && sr != null) sr.color = Color.white;
+        if (isDead) yield break;
+        if (sr != null) sr.color = Color.white;
     }
 
     public void ResetAttackTimer()
@@ -288,21 +299,24 @@ public class PlayerStateMachine : MonoBehaviour
     }
 
     /// <summary>
-    /// ????????????????????? CombatStatsData ?????¦É???????????????????§Ø?????
+    /// ????????????????????? CombatStatsData ?????????????????????????????????
     /// </summary>
     public int GetOutgoingDamageFromWeapon(int weaponBaseDamage, out bool isCrit)
     {
         return DamageCalculator.ComputeOutgoingDamage(weaponBaseDamage, combatStats, out isCrit);
     }
 
-    /// <summary>???????????? UI / ???????????</summary>
-    public int CurrentHealth => currentHealth;
+    /// <summary>??????? Entity?</summary>
+    public int CurrentHealth => _entity != null ? _entity.CurrentHealth : 0;
 
-    /// <summary>???????</summary>
-    public int MaxHealth => maxHealth;
+    /// <summary>????</summary>
+    public int MaxHealth => _entity != null ? _entity.MaxHealth : maxHealth;
 
-    /// <summary>?????????? CombatStatsData??????? 0??</summary>
-    public float Defense => _defense;
+    /// <summary>??</summary>
+    public float Defense => _entity != null ? _entity.Defense : 0f;
+
+    /// <summary>?????????/????</summary>
+    public Entity Entity => _entity;
 
     /// <summary>?????? 0~1</summary>
     public float CritChance => combatStats != null ? combatStats.critChance : 0f;
