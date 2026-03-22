@@ -3,10 +3,15 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "EnemyData", menuName = "GameData/EnemyData")]
 public class EnemyData : ScriptableObject
 {
-    [Header("»ù´¡ÊôÐÔ")]
-    public float moveSpeed = 2f;      // ÒÆ¶¯ËÙ¶È
-    public int maxHealth = 3;         // ×î´óÑªÁ¿
-    public int damage = 1;            // ¹¥»÷ÉËº¦
-    [Header("¼ì²â·¶Î§")]
-    public float chaseRange = 5f;     // ×·»÷·¶Î§
+    [Header("????")]
+    public float moveSpeed = 2f;
+    public int maxHealth = 3;
+    public int damage = 1;
+
+    [Tooltip("????????? DamageCalculator.ApplyDefense ???")]
+    [Min(0f)]
+    public float defense = 0f;
+
+    [Header("????")]
+    public float chaseRange = 5f;
 }

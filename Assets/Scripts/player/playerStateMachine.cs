@@ -23,6 +23,10 @@ public class PlayerStateMachine : MonoBehaviour
     public float moveSpeed = 5f;
     public float globalAttackCooldown = 0.5f;
 
+    [Header("?????????????")]
+    [Tooltip("????????? maxHealth / ???? / ?????????????????????????? maxHealth ?????")]
+    public CombatStatsData combatStats;
+
     [Header("????????????")]
     public int maxHealth = 3;
 
@@ -37,6 +41,7 @@ public class PlayerStateMachine : MonoBehaviour
     private float lastAttackTime; // ????????????????????
     private bool _attackButtonActive;
     private int currentHealth;
+    private float _defense;
     private float hurtTimer;
 
     private PlayerInput playerInput;
@@ -70,6 +75,15 @@ public class PlayerStateMachine : MonoBehaviour
         attackTimer = 0;
         isDead = false;
         isAttacking = false;
+        if (combatStats != null)
+        {
+            maxHealth = combatStats.maxHealth;
+            _defense = combatStats.defense;
+        }
+        else
+        {
+            _defense = 0f;
+        }
         currentHealth = maxHealth;
         _attackButtonActive = false;
     }
@@ -147,7 +161,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void UpdateAttackButtonActive()
     {
-        // InputSystem 模式下由 started/canceled 回调维护；此处只处理鼠标兜底模式。
+        // InputSystem ?????? started/canceled ?????????????????????????
         if (attackAction != null) return;
 
         if (Input.GetMouseButtonDown(0))
@@ -240,8 +254,9 @@ public class PlayerStateMachine : MonoBehaviour
         if (isDead) return;
         if (damage <= 0) return;
 
-        currentHealth -= damage;
-        Debug.Log($"{nameof(PlayerStateMachine)}: Took damage, remaining {currentHealth}");
+        int final = DamageCalculator.ApplyDefense(damage, _defense);
+        currentHealth -= final;
+        Debug.Log($"{nameof(PlayerStateMachine)}: Took {final} damage (raw {damage}), remaining {currentHealth}");
 
         if (currentHealth <= 0)
         {
@@ -271,4 +286,24 @@ public class PlayerStateMachine : MonoBehaviour
     {
         attackTimer = 0;
     }
+
+    /// <summary>
+    /// ????????????????????? CombatStatsData ?????ι???????????????????ж?????
+    /// </summary>
+    public int GetOutgoingDamageFromWeapon(int weaponBaseDamage, out bool isCrit)
+    {
+        return DamageCalculator.ComputeOutgoingDamage(weaponBaseDamage, combatStats, out isCrit);
+    }
+
+    /// <summary>???????????? UI / ???????????</summary>
+    public int CurrentHealth => currentHealth;
+
+    /// <summary>???????</summary>
+    public int MaxHealth => maxHealth;
+
+    /// <summary>?????????? CombatStatsData??????? 0??</summary>
+    public float Defense => _defense;
+
+    /// <summary>?????? 0~1</summary>
+    public float CritChance => combatStats != null ? combatStats.critChance : 0f;
 }

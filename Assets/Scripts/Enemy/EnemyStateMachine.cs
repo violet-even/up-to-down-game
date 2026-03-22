@@ -125,8 +125,10 @@ public class EnemyStateMachine : MonoBehaviour
         if (currentState == EnemyState.Dead) return;
         if (damage <= 0) return;
 
-        _currentHealth -= damage;
-        Debug.Log($"{nameof(EnemyStateMachine)}: Took damage, remaining {_currentHealth}");
+        float def = enemyData != null ? enemyData.defense : 0f;
+        int final = DamageCalculator.ApplyDefense(damage, def);
+        _currentHealth -= final;
+        Debug.Log($"{nameof(EnemyStateMachine)}: Took {final} damage (raw {damage}), remaining {_currentHealth}");
 
         if (_currentHealth <= 0)
         {

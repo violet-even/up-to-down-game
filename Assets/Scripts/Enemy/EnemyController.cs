@@ -32,7 +32,35 @@ public class EnemyController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("AttackCheck"))
-            TakeDamage(1);
+        if (!other.CompareTag("AttackCheck"))
+            return;
+
+        int dmg = ResolveDamageFromPlayerAttack(other);
+        TakeDamage(dmg);
+    }
+
+    /// <summary>
+    /// 从玩家武器数据 + 玩家 CombatStats（暴击）计算伤害；找不到则退回为 1。
+    /// </summary>
+    private static int ResolveDamageFromPlayerAttack(Collider2D attackCheck)
+    {
+        var weaponManager = attackCheck.GetComponentInParent<WeaponManager>();
+        if (weaponManager == null)
+            return 1;
+
+        var weaponData = weaponManager.GetCurrentWeaponData();
+        if (weaponData == null)
+            return 1;
+
+        int baseDamage = weaponData.attackDamage;
+        var playerGo = GameObject.FindGameObjectWithTag("Player");
+        if (playerGo == null)
+            return DamageCalculator.ComputeOutgoingDamage(baseDamage, null, out _);
+
+        var psm = playerGo.GetComponent<PlayerStateMachine>();
+        if (psm == null)
+            return DamageCalculator.ComputeOutgoingDamage(baseDamage, null, out _);
+
+        return psm.GetOutgoingDamageFromWeapon(baseDamage, out _);
     }
 }
