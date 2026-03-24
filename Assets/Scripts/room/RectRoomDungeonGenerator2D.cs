@@ -738,40 +738,43 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
     }
 
     /// <summary>
-    /// Instantiates a floor prefab scaled to cover the given rect (world space). Colliders on the prefab are removed so only boundary walls block movement.
+    /// Instantiates floor prefabs per cell (no stretching).
+    /// Colliders on tile prefabs are removed so only boundary walls block movement.
     /// </summary>
     private void CreateFloorVisual(Transform root, string kind, RectInt rect, GameObject prefab)
     {
         if (prefab == null || rect.width <= 0 || rect.height <= 0) return;
 
-        Vector2 centerWorld = CellToWorldCenter(rect);
-        Vector2 sizeWorld = CellToWorldSize(rect);
+        var group = new GameObject($"RectDungeon_Floor_{kind}_{rect.xMin}_{rect.yMin}_{rect.width}_{rect.height}");
+        group.transform.SetParent(root, false);
 
-        var go = Instantiate(prefab, new Vector3(centerWorld.x, centerWorld.y, 0f), Quaternion.identity, root);
-        go.name = $"RectDungeon_Floor_{kind}_{rect.xMin}_{rect.yMin}_{rect.width}_{rect.height}";
+        for (int x = rect.xMin; x < rect.xMax; x++)
+        {
+            for (int y = rect.yMin; y < rect.yMax; y++)
+            {
+                Vector2 cellCenter = CellToWorldCenter(x, y);
+                var tile = Instantiate(prefab, new Vector3(cellCenter.x, cellCenter.y, 0f), Quaternion.identity, group.transform);
+                tile.name = $"Tile_{x}_{y}";
 
-        var sr = go.GetComponentInChildren<SpriteRenderer>();
-        if (sr != null && sr.sprite != null)
-        {
-            Vector2 spriteSize = sr.sprite.bounds.size;
-            float sx = spriteSize.x > 1e-5f ? sizeWorld.x / spriteSize.x : sizeWorld.x;
-            float sy = spriteSize.y > 1e-5f ? sizeWorld.y / spriteSize.y : sizeWorld.y;
-            go.transform.localScale = new Vector3(sx, sy, 1f);
-            sr.sortingOrder = floorSortingOrder;
-        }
-        else
-        {
-            // No sprite: assume prefab is 1 world unit, scale to rect size
-            go.transform.localScale = new Vector3(sizeWorld.x, sizeWorld.y, 1f);
-        }
+                foreach (var sr in tile.GetComponentsInChildren<SpriteRenderer>(true))
+                    sr.sortingOrder = floorSortingOrder;
 
-        foreach (var col in go.GetComponentsInChildren<Collider2D>(true))
-        {
-            if (Application.isPlaying)
-                Destroy(col);
-            else
-                DestroyImmediate(col);
+                foreach (var col in tile.GetComponentsInChildren<Collider2D>(true))
+                {
+                    if (Application.isPlaying)
+                        Destroy(col);
+                    else
+                        DestroyImmediate(col);
+                }
+            }
         }
+    }
+
+    private Vector2 CellToWorldCenter(int cellX, int cellY)
+    {
+        float cx = worldOrigin.x + (cellX + 0.5f) * cellSize;
+        float cy = worldOrigin.y + (cellY + 0.5f) * cellSize;
+        return new Vector2(cx, cy);
     }
 
     private struct RectKey : IEquatable<RectKey>
