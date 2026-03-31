@@ -132,6 +132,7 @@ GameObject:
   m_Component:
   - component: {fileID: 233266664}
   - component: {fileID: 233266663}
+  - component: {fileID: 233266667}
   m_Layer: 0
   m_Name: Room
   m_TagString: Untagged
@@ -217,6 +218,9 @@ MonoBehaviour:
   corridorFloorTile: {fileID: 11400000, guid: d18126a9057e1694f9bf3266a4c9b811, type: 2}
   clearFloorTilemapBeforePaint: 1
   paintWallTiles: 0
+  enableRoomFlow: 1
+  roomTriggerZSize: 1
+  roomFlowController: {fileID: 0}
   wallTilemap: {fileID: 0}
   wallTilemapRenderer: {fileID: 0}
   clearWallTilemapBeforePaint: 1
@@ -250,6 +254,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &233266667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233266662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52c68f5500fd4a34482a9a55892bc655, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyPrefabs:
+  - {fileID: 5454154464641267985, guid: 1f922ae3f8929e040bbe930ae08a4fdf, type: 3}
+  enemiesPerRoomMin: 4
+  enemiesPerRoomMax: 10
+  spawnInsetCells: 1
+  minSpawnDistanceFromPlayer: 2.5
+  skipInitialRoom: 1
+  blockDoorsUntilCleared: 1
+  doorCloseDelay: 0.5
+  doorVisualPrefab: {fileID: 7201525685949960038, guid: 4634c7369718347488415d3cfd4dd89b, type: 3}
+  doorVisualSortingOrder: 5
+  doorThickness: 0.4
+  doorsAreTriggers: 0
+  generator: {fileID: 0}
 --- !u!1 &401975497
 GameObject:
   m_ObjectHideFlags: 0

@@ -207,6 +207,17 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
     [Tooltip("为 true 时：在单独的 Tilemap 上绘制墙/边缘瓦片（仅视觉）。若只要空气墙，关闭即可。")]
     public bool paintWallTiles = false;
 
+    [Header("房间流程（进房刷怪/清怪开门）")]
+    [Tooltip("为 true 时：为每个房间创建触发器，并启用 RoomFlowController（进房刷怪、清怪开门）。")]
+    public bool enableRoomFlow = false;
+
+    [Tooltip("房间触发器高度（Z 轴不用管）。建议保持 1。")]
+    [Min(0.1f)]
+    public float roomTriggerZSize = 1f;
+
+    [Tooltip("刷怪/关门逻辑由该组件负责。为空则会自动挂到本物体上。")]
+    public RoomFlowController roomFlowController;
+
     [Tooltip("Optional existing Tilemap for walls/edges; if null, generator will create one under the Grid.")]
     public Tilemap wallTilemap;
 
@@ -903,6 +914,45 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
         {
             BuildBoundaryWalls(root);
         }
+
+        if (enableRoomFlow)
+        {
+            SetupRoomFlow(root);
+        }
+    }
+
+    /// <summary>
+    /// 为每个房间创建触发器，并注册到 RoomFlowController。
+    /// </summary>
+    private void SetupRoomFlow(Transform root)
+    {
+        if (roomFlowController == null)
+            roomFlowController = GetComponent<RoomFlowController>();
+        if (roomFlowController == null)
+            roomFlowController = gameObject.AddComponent<RoomFlowController>();
+
+        roomFlowController.generator = this;
+
+        for (int i = 0; i < GeneratedRooms.Count; i++)
+        {
+            RectInt r = GeneratedRooms[i];
+            Vector2 centerWorld = CellToWorldCenter(r);
+            Vector2 sizeWorld = CellToWorldSize(r);
+
+            var go = new GameObject($"RectDungeon_RoomArea_{i}_{r.xMin}_{r.yMin}_{r.width}_{r.height}");
+            go.transform.SetParent(root, false);
+            go.transform.position = new Vector3(centerWorld.x, centerWorld.y, 0f);
+
+            var col = go.AddComponent<BoxCollider2D>();
+            col.isTrigger = true;
+            col.size = sizeWorld;
+
+            var area = go.AddComponent<RoomArea2D>();
+            area.roomIndex = i;
+            area.roomRect = r;
+
+            roomFlowController.RegisterRoom(area);
+        }
     }
 
     /// <summary>
@@ -1327,6 +1377,11 @@ public class RectRoomDungeonGenerator2D : MonoBehaviour
 
         return walkable;
     }
+
+    /// <summary>
+    /// 供外部系统（如房间流程/门空气墙）查询可走网格。
+    /// </summary>
+    public bool[,] BuildWalkableGrid_Public() => BuildWalkableGrid();
 
     private void MarkRectOnGrid(bool[,] grid, RectInt rect)
     {
