@@ -3,7 +3,11 @@ guid: 910ccd84193ff4949a1f71dbbe4435fd
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
+<<<<<<< HEAD
   serializedVersion: 13
+=======
+  serializedVersion: 11
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -20,12 +24,18 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
+<<<<<<< HEAD
     flipGreenChannel: 0
+=======
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
+<<<<<<< HEAD
   ignoreMipmapLimit: 0
+=======
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -48,7 +58,11 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
+<<<<<<< HEAD
   spritePixelsToUnits: 400
+=======
+  spritePixelsToUnits: 100
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -64,8 +78,11 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
+<<<<<<< HEAD
   swizzle: 50462976
   cookieLightType: 1
+=======
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -77,6 +94,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+<<<<<<< HEAD
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -104,6 +122,8 @@ TextureImporter:
     allowsAlphaSplitting: 0
     overridden: 0
     ignorePlatformSupport: 0
+=======
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
@@ -119,9 +139,15 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+<<<<<<< HEAD
     nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
+=======
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+>>>>>>> 3da04a7679d95fb6ab21c5d7f78731e64065c4bd
   userData: 
   assetBundleName: 
   assetBundleVariant: 
