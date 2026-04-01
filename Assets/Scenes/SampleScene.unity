@@ -130,9 +130,15 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+<<<<<<< HEAD
   - component: {fileID: 590407639}
   - component: {fileID: 590407638}
   - component: {fileID: 590407637}
+=======
+  - component: {fileID: 233266664}
+  - component: {fileID: 233266663}
+  - component: {fileID: 233266667}
+>>>>>>> upstream/main
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -140,7 +146,261 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+<<<<<<< HEAD
 --- !u!81 &590407637
+=======
+--- !u!114 &233266663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233266662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d550fba5228d47429076d64acce9177, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minRoomCount: 5
+  maxRoomCount: 10
+  maxPlacementAttempts: 250
+  mapWidth: 400
+  mapHeight: 400
+  worldOrigin: {x: 0, y: 0}
+  cellSize: 2
+  generateOnStart: 1
+  instantiateOnStart: 1
+  placePlayerOnGenerate: 1
+  playerPrefab: {fileID: 2968081025137147828, guid: 06df20768420b5b44aca18b90dd983a8, type: 3}
+  alwaysSpawnPlayerPrefab: 1
+  playerTransform: {fileID: 0}
+  playerTag: Player
+  roomWidthMin: 8
+  roomWidthMax: 12
+  roomHeightMin: 8
+  roomHeightMax: 12
+  roomPadding: 1
+  corridorWidth: 3
+  corridorLengthMin: 3
+  corridorLengthMax: 6
+  connectAttemptsPerSide: 40
+  maxExpansionAttempts: 2000
+  horizontalThenVertical: 1
+  generatedRoot: {fileID: 233266664}
+  rectPrefab: {fileID: 6098431679915729383, guid: 1690552244d30ec45959a6d149710daf, type: 3}
+  addBoxColliderIfNoPrefab: 1
+  buildBoundaryWalls: 1
+  wallThickness: 0.08
+  wallsAreTriggers: 0
+  walkableRectCollidersAsTriggers: 1
+  useFloorPrefabs: 0
+  floorRoomPrefab: {fileID: 6098431679915729383, guid: 1690552244d30ec45959a6d149710daf, type: 3}
+  floorCorridorPrefab: {fileID: 7201525685949960038, guid: 4634c7369718347488415d3cfd4dd89b, type: 3}
+  hideWalkableColliderWhenFloorPrefab: 1
+  floorSortingOrder: -10
+  useTilemap: 1
+  grid: {fileID: 469487099}
+  floorTilemap: {fileID: 1922646296}
+  floorTilemapRenderer: {fileID: 0}
+  referenceTileSprite: {fileID: 21300000, guid: 1ead325fa396caa4c86dd0ecd6efb8b3, type: 3}
+  roomTiles9:
+    center: {fileID: 11400000, guid: adbe79afab5116b42a0afa3a1152b978, type: 2}
+    edgeTop: {fileID: 11400000, guid: 96e32e5a9732d5b479d8eec71196bd39, type: 2}
+    edgeBottom: {fileID: 11400000, guid: a36acd1ef7cd4c647b999d6bdc739fdf, type: 2}
+    edgeLeft: {fileID: 11400000, guid: 60a39be29345ea149bee081f7ee0adbc, type: 2}
+    edgeRight: {fileID: 11400000, guid: b317a5e0948748745afac814870ee96e, type: 2}
+    cornerTopLeft: {fileID: 11400000, guid: fcf23048535dacd49954fbfa9dabc33d, type: 2}
+    cornerTopRight: {fileID: 11400000, guid: 43370728b11ae06468c18b53927643d7, type: 2}
+    cornerBottomLeft: {fileID: 11400000, guid: 49682683c67f496498606a1b628b4fc0, type: 2}
+    cornerBottomRight: {fileID: 11400000, guid: 033cd4cf19cad23438d6ae38d008d631, type: 2}
+  corridorTiles9:
+    center: {fileID: 11400000, guid: d18126a9057e1694f9bf3266a4c9b811, type: 2}
+    edgeTop: {fileID: 11400000, guid: 53f24d27406172446b1fbd5921d2a850, type: 2}
+    edgeBottom: {fileID: 11400000, guid: 023bd92ec79725f4e99c9f7ff4ca3f71, type: 2}
+    edgeLeft: {fileID: 11400000, guid: 4938cf8097dc63740ad0cee3f5275282, type: 2}
+    edgeRight: {fileID: 11400000, guid: baa1bf087672cad468d4378c9f1f44cd, type: 2}
+    cornerTopLeft: {fileID: 11400000, guid: 612cdd5a1f9c1e54eb41ae4ab52becc3, type: 2}
+    cornerTopRight: {fileID: 11400000, guid: 800532cce95b2224ca3b9e7879416a97, type: 2}
+    cornerBottomLeft: {fileID: 11400000, guid: 59a7756fe163a6349a0f9cefe4419130, type: 2}
+    cornerBottomRight: {fileID: 11400000, guid: 059f57639e0d25a44bcecfc6a0f4e024, type: 2}
+  roomFloorTile: {fileID: 11400000, guid: adbe79afab5116b42a0afa3a1152b978, type: 2}
+  corridorFloorTile: {fileID: 11400000, guid: d18126a9057e1694f9bf3266a4c9b811, type: 2}
+  clearFloorTilemapBeforePaint: 1
+  paintWallTiles: 0
+  enableRoomFlow: 1
+  roomTriggerZSize: 1
+  roomFlowController: {fileID: 0}
+  wallTilemap: {fileID: 0}
+  wallTilemapRenderer: {fileID: 0}
+  clearWallTilemapBeforePaint: 1
+  wallTilePlacement: 0
+  wallSortingOrder: -5
+  wallTopTile: {fileID: 0}
+  wallBottomTile: {fileID: 0}
+  wallLeftTile: {fileID: 0}
+  wallRightTile: {fileID: 0}
+  paintCornerTiles: 0
+  outerCornerTopLeftTile: {fileID: 0}
+  outerCornerTopRightTile: {fileID: 0}
+  outerCornerBottomLeftTile: {fileID: 0}
+  outerCornerBottomRightTile: {fileID: 0}
+  innerCornerTopLeftTile: {fileID: 0}
+  innerCornerTopRightTile: {fileID: 0}
+  innerCornerBottomLeftTile: {fileID: 0}
+  innerCornerBottomRightTile: {fileID: 0}
+--- !u!4 &233266664
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233266662}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.8442097, y: -0.27429363, z: -0.054111388}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &233266667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233266662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52c68f5500fd4a34482a9a55892bc655, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyPrefabs:
+  - {fileID: 5454154464641267985, guid: 1f922ae3f8929e040bbe930ae08a4fdf, type: 3}
+  enemiesPerRoomMin: 4
+  enemiesPerRoomMax: 10
+  spawnInsetCells: 1
+  minSpawnDistanceFromPlayer: 2.5
+  skipInitialRoom: 1
+  blockDoorsUntilCleared: 1
+  doorCloseDelay: 0.5
+  doorVisualPrefab: {fileID: 7201525685949960038, guid: 4634c7369718347488415d3cfd4dd89b, type: 3}
+  doorVisualSortingOrder: 5
+  doorThickness: 0.4
+  doorsAreTriggers: 0
+  generator: {fileID: 0}
+--- !u!1 &401975497
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 401975499}
+  - component: {fileID: 401975498}
+  m_Layer: 0
+  m_Name: WeaponInventory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &401975498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 401975497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fd8fc1df440e0a41ba7b82a27a05b0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  primaryInitWeapon: {fileID: 11400000, guid: 460fffe6317c8204e9af7e7a0426cb3a, type: 2}
+  secondaryInitWeapon: {fileID: 11400000, guid: 8bf5d93e15de36b42858cc90eb12628e, type: 2}
+--- !u!4 &401975499
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 401975497}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.8345182, y: -0.7026294, z: 0.056478318}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &469487098
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 469487100}
+  - component: {fileID: 469487099}
+  m_Layer: 0
+  m_Name: Grid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!156049354 &469487099
+Grid:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 469487098}
+  m_Enabled: 1
+  m_CellSize: {x: 2, y: 2, z: 1}
+  m_CellGap: {x: 0, y: 0, z: 0}
+  m_CellLayout: 0
+  m_CellSwizzle: 0
+--- !u!4 &469487100
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 469487098}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1922646294}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &519420028
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 519420032}
+  - component: {fileID: 519420031}
+  - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!81 &519420029
+>>>>>>> upstream/main
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
